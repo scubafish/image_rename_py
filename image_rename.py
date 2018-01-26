@@ -123,6 +123,8 @@ def get_camera_model(metadata, image_data):
 
 #	print("Model name from file:", model_from_file, "Mapped Name:", camera_name_map(model_from_file))
 
+	# TODO - If model_from_file wasn't found we still stick an emoty entry in
+	# image_data. Should we?
 	image_data["model_exif"] = model_from_file
 	image_data['model_mapped'] = camera_name_map(model_from_file)
 
@@ -140,7 +142,7 @@ def get_date(metadata, image_data):
 		filedate = metadata.get("QuickTime:MediaCreateDate")
 
 	if not filedate:
-		return 1
+		return False
 
 #	print("date: ", filedate)
 	datetime_object = datetime.strptime(filedate, "%Y:%m:%d %H:%M:%S")
@@ -153,14 +155,14 @@ def get_date(metadata, image_data):
 	image_data["minute"] = datetime_object.timetuple().tm_min
 	image_data["second"] = datetime_object.timetuple().tm_sec
 
-	return 0
+	return True
 
 # We know that some files, like the videos on the S4 and S7, use timestamps
 # that are GMT instead of local time. Since I want to make sure I remember
 # to use localtime in the filenames this function checks if a skew was set
 # which can be used to remind me to set one for those video types.
 #
-def skew_set(skew_days, skew_hours, skew_mins, skew_secs):
+def set_skew(skew_days, skew_hours, skew_mins, skew_secs):
 	if (skew_days != 0) or (skew_hours != 0) or (skew_mins != 0) or (skew_secs != 0):
 		return True
 
@@ -200,7 +202,7 @@ def add_skew(image_data, metadata, skew_days, skew_hours, skew_mins, skew_secs):
 	image_data["minute"] = datetime_object.timetuple().tm_min
 	image_data["second"] = datetime_object.timetuple().tm_sec
 
-	return
+	return True
 
 # Check for the 2 special cases where the S7 puts file numbers in the file name
 # _NNN or (N) at the end of the file.
@@ -331,9 +333,9 @@ def get_filenumber(metadata, image_data):
 		filenumber = filenumber[-4:]
 
 		image_data["filenumber"] = filenumber
-		return 0
+		return True
 
-	return 1
+	return False
 
 # Create the full destination directory path where the output file will me moved to
 # The path format is: /optional/path/set/by/user/YYYYMMDD/
@@ -382,20 +384,6 @@ def create_dest_file_name(image_data):
 # Do the actual file rename (unless preview is True)
 #
 def rename_file(dest_dir, dest_file, image_data, preview):
-	if dest_dir:
-#		print("Creating dest dir:", dest_dir)
-
-		try:
-			os.makedirs(dest_dir, exist_ok=True)
-
-		except:
-			print("Error: Could not create", dest_dir)
-			return
-
-	else:
-		print("No sub folder to create")
-		pass
-
 	# Full path and name of destination file
 	dest_full = dest_dir + dest_file
 	src_full = image_data.get('fullfilepath')
@@ -403,6 +391,20 @@ def rename_file(dest_dir, dest_file, image_data, preview):
 	print("Moving", src_full, "to", dest_full)
 
 	if preview == False:
+		if dest_dir:
+#			print("Creating dest dir:", dest_dir)
+
+			try:
+				os.makedirs(dest_dir, exist_ok=True)
+
+			except:
+				print("Error: Could not create", dest_dir)
+				return False
+
+		else:
+			print("No sub folder to create")
+			pass
+
 #		# Get the src file's permissions
 #		stat = os.stat(src_full)
 
@@ -417,12 +419,12 @@ def rename_file(dest_dir, dest_file, image_data, preview):
 
 		except:
 			print("Error moving", src_full, "to", dest_full)
-			return
+			return False
 
 #		# Reset file permissions to the src file's permissions
 #		os.utime(dest_full, (stat.st_atime, stat.st_mtime))
 
-	return
+	return True
 
 def main(argv):
 	global verbose
@@ -534,11 +536,11 @@ def main(argv):
 			print(metadata["SourceFile"], "- Skipping. Getting data from THM")
 			continue
 
-		if get_date(metadata, image_data) != 0:
+		if get_date(metadata, image_data) == False:
 			print("Could not get date. Skipping")
 			continue
 
-		if get_filenumber(metadata, image_data) != 0:
+		if get_filenumber(metadata, image_data) == False:
 			print("Could not get file number. Non fatal.")
 
 		add_skew(image_data, metadata, args.skewd, args.skewh, args.skewm, args.skews)
@@ -555,7 +557,7 @@ def main(argv):
 		# to compensate, skip file
 		if (image_data.get('file_extension').upper() == "MP4") and \
 		   ((image_data.get('model_mapped') == "S7") or (image_data.get('model_mapped') == "S4")) and \
-		   (skew_set(args.skewd, args.skewh, args.skewm, args.skews) == False):
+		   (set_skew(args.skewd, args.skewh, args.skewm, args.skews) == False):
 			print("Skipping file. Video from phone that usually requires a skew value for correct time.")
 			continue
 
