@@ -31,6 +31,6 @@ Examples outputs would be:
 
 20161016/20161016_09_16_08_GPRO.JPG
 
-The script uses a table of supported camera models (found in the Exif data) to help figure out naming logic and special case some camera types. This is especially useful for normalizing names across multiple camera models and for creating logical file names for timelapse photography input when there may be 30,000+ thousand photographs to organize.
+The script uses a table of supported camera models (found in the Exif data) to help figure out naming logic and special case some camera types. The script is especially useful for normalizing names across multiple camera models and for creating logical file names for large image sets such as timelapse photography when there may be 30,000+ photographs to organize.
 
-It also includes features to adjust the timestamp on the generated filenames in case your camera's date and time was not set correctly.
+It also includes features to adjust the timestamp on the generated filenames in case your camera's date and time were not set correctly.
