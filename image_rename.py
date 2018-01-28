@@ -204,12 +204,10 @@ def add_skew(image_data, metadata, skew_days, skew_hours, skew_mins, skew_secs):
 
 	return True
 
-# Check for the 2 special cases where the S7 puts file numbers in the file name
-# _NNN or (N) at the end of the file.
+# Check for the 2 special cases where the S4 and S7 puts file numbers in the
+# file name _NNN or (N) at the end of the file.
 #
-# TODO - can probably use the same code for the S4, need to check
-#
-def get_filenumber_s7(metadata, image_data, filenumber):
+def get_filenumber_s4_s7(metadata, image_data, filenumber):
 #	print("S7 looking for _NNN")
 
 	# First check for _NNN
@@ -320,8 +318,9 @@ def get_filenumber(metadata, image_data):
 	# images in that second or in burst mode. The file numbers
 	# will either be _NNN.EXT or (N).EXT depending on mode. Look for both.
 	# Note that they are optional, and usually not there.
-	if (filenumber == "None") and (image_data.get('model_exif') == "SM-G930V"):
-		filenumber = get_filenumber_s7(metadata, image_data, filenumber)
+	if (filenumber == "None") and \
+	    ((image_data.get('model_exif') == "SM-G930V") or (image_data.get('model_exif') == "SCH-I545")):
+		filenumber = get_filenumber_s4_s7(metadata, image_data, filenumber)
 
 	if filenumber != "None":
 		# Make sure the filenumber is truncated or expanded to 4 digits
@@ -558,8 +557,9 @@ def main(argv):
 		if (image_data.get('file_extension').upper() == "MP4") and \
 		   ((image_data.get('model_mapped') == "S7") or (image_data.get('model_mapped') == "S4")) and \
 		   (set_skew(args.skewd, args.skewh, args.skewm, args.skews) == False):
-			print("Skipping file. Video from phone that usually requires a skew value for correct time.")
-			continue
+#			print("Skipping file. Video from phone that usually requires a skew value for correct time.")
+#			continue
+			pass
 
 		# If this is a THM file and we skipped the MOV rename the associated
 		# MOV files as well (5DM2, G9 AVIs, etc)
