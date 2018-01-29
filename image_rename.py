@@ -382,7 +382,7 @@ def create_dest_file_name(image_data):
 
 # Do the actual file rename (unless preview is True)
 #
-def rename_file(dest_dir, dest_file, image_data, preview):
+def rename_file(dest_dir, dest_file, image_data, copy, preview):
 	# Full path and name of destination file
 	dest_full = dest_dir + dest_file
 	src_full = image_data.get('fullfilepath')
@@ -412,13 +412,16 @@ def rename_file(dest_dir, dest_file, image_data, preview):
 			print("ERROR: Destination file", dest_full, "Already exists. Skipping", src_full)
 			return
 
-		# if not, move
-		try:
-			shutil.move(src_full, dest_full)
+		# if not, move (or copy)
+		if(copy):
+			pass
+		else:
+			try:
+				shutil.copyfile(src_full, dest_full)
 
-		except:
-			print("Error moving", src_full, "to", dest_full)
-			return False
+			except:
+				print("Error moving", src_full, "to", dest_full)
+				return False
 
 #		# Reset file permissions to the src file's permissions
 #		os.utime(dest_full, (stat.st_atime, stat.st_mtime))
@@ -440,6 +443,7 @@ def main(argv):
 	parser.add_argument('--camera', nargs='?', help='Set camera name')
 	parser.add_argument('-v', action='store_true', help='Be Verbose')
 	parser.add_argument('-p', action='store_true', help='Preview actions only')
+	parser.add_argument('--copy', action='store_true', help='Copy instead of move images')
 	parser.add_argument('--parentdir', nargs='?', help='Destination directory before dated subdirectory')
 	parser.add_argument('--nosubdir', action='store_true', help='Do not create dated subdirectory')
 	parser.add_argument('-f', required=True, nargs='+', help='Files to rename')
@@ -456,6 +460,7 @@ def main(argv):
 		print(args.camera)
 		print(args.v)
 		print(args.p)
+		print(args.copy)
 		print(args.parentdir)
 		print(args.nosubdir)
 #		print(args.f)
@@ -591,7 +596,7 @@ def main(argv):
 				tmp_dest_file = create_dest_file_name(tmp_image_data)
 				rename_file(dest_dir, tmp_dest_file, tmp_image_data, args.p)				
 
-		rename_file(dest_dir, dest_file, image_data, args.p)
+		rename_file(dest_dir, dest_file, image_data, args.copy, args.p)
 
 if __name__ == "__main__":
 	main(sys.argv)
