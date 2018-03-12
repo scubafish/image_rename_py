@@ -405,7 +405,7 @@ def rename_file(dest_dir, dest_file, image_data, copy, preview):
 			pass
 
 #		# Get the src file's permissions
-#		stat = os.stat(src_full)
+		stat = os.stat(src_full)
 
 		# Check if dest file exists
 		if os.path.isfile(dest_full):
@@ -414,8 +414,6 @@ def rename_file(dest_dir, dest_file, image_data, copy, preview):
 
 		# if not, move (or copy)
 		if(copy):
-			pass
-		else:
 			try:
 				shutil.copyfile(src_full, dest_full)
 
@@ -423,8 +421,16 @@ def rename_file(dest_dir, dest_file, image_data, copy, preview):
 				print("Error moving", src_full, "to", dest_full)
 				return False
 
+		else:
+			try:
+				shutil.move(src_full, dest_full)
+
+			except:
+				print("Error moving", src_full, "to", dest_full)
+				return False
+
 #		# Reset file permissions to the src file's permissions
-#		os.utime(dest_full, (stat.st_atime, stat.st_mtime))
+		os.utime(dest_full, (stat.st_atime, stat.st_mtime))
 
 	return True
 
